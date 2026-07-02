@@ -3,25 +3,23 @@ import  fs  from 'fs';
 import net from 'net'
 import path from 'path';
 import readline from 'readline';
+import { getTargetDir } from './rlCommands.js';
 
 export let PORT = 8000;
-const HOST = '0.0.0.0'; // Listens on all available network interfaces
-
+const HOST = '0.0.0.0';
 export let activeSocket = null;
 
+export function setPort(newPort){
+    PORT = newPort;
+}
 const server = net.createServer((socket) => {
     console.log('Client connected:', socket.remoteAddress);
     activeSocket = socket;
 
     let dataBuffer = '';
-    // This triggers whenever data comes through the pipe
-    socket.on('data', (chunk) => {
-            
-        
-            
-        dataBuffer += chunk.toString(); // Add new data to the buffer
 
-    // While there is a newline in the buffer, process each full message
+    socket.on('data', (chunk) => {
+        dataBuffer += chunk.toString();
     while (dataBuffer.indexOf('\n') !== -1) {
         const newlineIndex = dataBuffer.indexOf('\n');
         const message = dataBuffer.slice(0, newlineIndex);
@@ -30,13 +28,20 @@ const server = net.createServer((socket) => {
                 const packet = JSON.parse(message)
     
                 if(packet.type === 'FILE'){
-                
                     
                     console.log(`Recieving FILE ${packet.content.fileName}`);
     
                     const fileBuffer = Buffer.from(packet.content.file, 'base64');
-    
-                    fs.writeFile(packet.content.fileName, fileBuffer, (err) => {
+
+                    const fileName = packet.content.fileName;
+                    const targetDirectory = getTargetDir();
+                    if(!targetDirectory){
+                        throw new Error('Choose a filepath first (/file --path <PATH>')
+                    }
+                    // 3. Combine the directory and the filename
+                    const savePath = path.join(process.cwd(), targetDirectory, fileName);
+                    
+                    fs.writeFile(savePath, fileBuffer, (err) => {
                         if (err) console.error("Write error:", err);
                         else console.log("File saved successfully!");
                     })
@@ -61,7 +66,37 @@ const server = net.createServer((socket) => {
     });
 });
 
-server.listen(PORT, HOST, () => {
-    console.log(`Server listening on ${HOST}:${PORT}`);
-});
+export function serverBoot(arg = PORT){
+   try{
+    server.listen(arg, HOST, () => {
+        if(arg === 8000){
+            console.log(`Server listening on default port ${HOST}:${arg}`);
+        } else {
+            console.log(`Server listening on ${HOST}:${arg}`);
+        }
+    
+    });
+   } catch(e){
+    console.log(`The following error occured: ${e.message}`)
+   }
+}
 
+
+
+export function serverReboot() {
+    try{
+        server.close(() => {
+        console.log('Waiting 500ms to clear port...')
+
+        setTimeout(() => {
+            server.listen(PORT, HOST, () => {
+                console.log(`Server listening on ${HOST}:${PORT}`);
+            });
+        }, 500)
+    })
+    } catch(e){
+        console.log(`Something went wrong: ${e}`)
+    }
+    
+
+}
