@@ -4,9 +4,24 @@ import net from 'net'
 import path from 'path';
 import readline from 'readline';
 import { getTargetDir } from './rlCommands.js';
+import os from 'os';
+
+function getLocalIPv4() {
+    const interfaces = os.networkInterfaces();
+    
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            // Filter: Must be IPv4, not the loopback (internal) address
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
 
 export let PORT = 8000;
-const HOST = '127.0.0.1'; // Client must target a specific IP, not 0.0.0.0
+const HOST = getLocalIPv4()
 
 // 1. The client IS the active socket. We export it so rlCommands can use it.
 export const client = new net.Socket();
