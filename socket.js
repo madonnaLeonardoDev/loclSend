@@ -2,18 +2,16 @@ import { handleData } from "./fileHandling.js";
 
 export let activeSocket = null;
 
-export let usersMap = new Map()
+export function userId(socket){
+    return `${socket.remoteAddress}:${socket.remotePort}`
+}
 
-export function createSocket(socket, type = null){
-    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
-    if(type === 'server'){
-        console.log(`Client connected ${socket.remoteAddress}`)
-    }
-    
+export function createSocket(socket, type = null){    
     activeSocket = socket;
     //Incoming data handling
     socket.on('data', (chunk) => {
         handleData(chunk, socket)
+
         });
 
     socket.on('end', () => {
@@ -35,11 +33,7 @@ export async function closeSocket(){
     await new Promise((resolve) => {
         if (activeSocket.destroyed) return resolve();
         activeSocket.once('close', () => resolve())
-        activeSocket.end()
-    }).then(() => {
+        activeSocket.end()})
         console.log('Socket Closed Succesfully')
         activeSocket = null
-        return;
-    })
-    
-}
+    }

@@ -3,7 +3,7 @@
 import { time, timeStamp } from 'console';
 import net from 'net'
 import readline from 'readline';
-import { createSocket } from './socket.js';
+import { createSocket, userId } from './socket.js';
 
 
 //Default PORT
@@ -19,21 +19,19 @@ export function setPort(newPort){
 export let usersMap = new Map()
 
 const server = net.createServer((socket) => {
-    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
     createSocket(socket, 'server')
-    usersMap.set(userId, {
+    console.log(`New Client connected: ${userId(socket)}`)
+    //Add the connected socket to usersMap
+    usersMap.set(userId(socket), {
         socket: socket
     })
+    //Check if the server was added to the userMap if not add
+    if(!usersMap.has(`${socket.localAddress}:${socket.localPort}`)){
+        usersMap.set(`${socket.localAddress}:${socket.localPort}`, {
+        socket: 'server'
+    })
+    }
 });
-
-server.on('connection', (socket) => {
-    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
-    console.log(`New Client connected: ${userId}`)
-    usersMap.set(userId, {
-        socket: socket
-    })
-})
-
 
 
 

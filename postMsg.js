@@ -1,5 +1,4 @@
 import { activeSocket } from "./socket.js";
-import { usersMap } from "./socket.js";
 
 export function postMessage(type, content){
     if(!activeSocket){
@@ -7,10 +6,10 @@ export function postMessage(type, content){
         return;
     } 
     const packet = {
-        userId: `${activeSocket.remoteAddress}:${activeSocket.remotePort}`,
         type: type,
         content: content,
-        timeStamp: Date.now()
+        timeStamp: Date.now(),
+        sender: `${activeSocket.localAddress}:${activeSocket.localPort}`
     }
 
     activeSocket.write(JSON.stringify(packet) + '\n')

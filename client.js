@@ -20,8 +20,7 @@ function getLocalIPv4() {
     }
     return '127.0.0.1';
 }
-
-const client = new net.Socket(); 
+export const client = new net.Socket(); 
 
 export let PORT = 8000;
 const HOST = getLocalIPv4()
@@ -31,6 +30,7 @@ export function setPort(newPort){
 }
 
 export function clientConnect(arg = PORT) {
+    createSocket(client);
     console.log(`Attempting connection to ${HOST}:${arg}...`);
 
     // 1. Catch all errors generically to prevent process crashes
@@ -43,5 +43,3 @@ export function clientConnect(arg = PORT) {
         console.log(`Connected to ${HOST}:${arg}`);
     });
 }
-
-createSocket(client)

@@ -2,10 +2,10 @@ import { time, timeStamp } from 'console';
 import  fs  from 'fs';
 import path from 'path';
 import {rl} from './main.js';
-import { PORT, serverReboot, setPort, serverBoot } from './server.js';
+import { PORT, serverReboot, setPort, serverBoot, usersMap } from './server.js';
 import { clientConnect } from './client.js';
 import { postMessage } from './postMsg.js';
-import { activeSocket, closeSocket } from './socket.js';
+import { activeSocket, closeSocket, userId } from './socket.js';
 
 
 
@@ -31,8 +31,9 @@ export function getTargetDir(){
 // rlCommands list
 const rlCommands = {
     'test': [,(args, argsArray) => {
-        console.log(`These are the ARGS ${args}`)
-        console.log(`This is the ARGS ARRAY ${argsArray}`)
+        for(const [userId, userData] of usersMap){
+            console.log(userId)
+        }
     }],
     'room': [,(args, argsArray) =>{
                         if(!args){
@@ -44,7 +45,7 @@ const rlCommands = {
                             checkValidArguments(argsArray, 0)
                             checkValidArguments(argsArray, 1)
                             portArg = argsArray[1]
-                        if(argsArray[0] == '--create'){
+                        if(argsArray[0] == 'create'){
                             if(/^\d+$/.test(portArg) && portArg.length === 4){
                                 console.log(`Creating room on port ${portArg}`)
                                 serverBoot(portArg)
@@ -54,7 +55,7 @@ const rlCommands = {
                             serverBoot();
                             return;
                         }
-                        if(argsArray[0] == '--join'){
+                        if(argsArray[0] == 'join'){
                             if(/^\d+$/.test(portArg) && portArg.length === 4){
                                 console.log(`Connecting to room on port ${portArg}`)
                                 clientConnect(portArg)
@@ -76,7 +77,7 @@ const rlCommands = {
                             if(!args){
                                 console.log('You need to pass at least a value')
                             } else {
-                                postMessage('MSG', args)
+                                postMessage('SERVER-MSG', args)
                                 console.log(`>>> ${args}`)
                             }
                         }],
@@ -85,7 +86,7 @@ const rlCommands = {
                                 console.log('You need to pass at least a value')
                                 return;
                             }
-                            if(argsArray[0] == '--path'){
+                            if(argsArray[0] == 'path'){
                                 if(!argsArray[1]){
                                     console.log(`Insert a valid File Path`)
                                     return;
@@ -119,7 +120,7 @@ const rlCommands = {
             console.log(PORT)
             return;
         };
-        if(argsArray[0] === '--set'){
+        if(argsArray[0] === 'set'){
             const portArg = argsArray[1];
 
             //THIS IF CHECKS IF ARGS IS A NUMBER OF 4 DIGITS LENGTH
