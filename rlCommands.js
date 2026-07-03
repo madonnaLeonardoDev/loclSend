@@ -5,7 +5,7 @@ import {rl} from './main.js';
 import { PORT, serverReboot, setPort, serverBoot } from './server.js';
 import { clientConnect } from './client.js';
 import { postMessage } from './postMsg.js';
-import { closeSocket } from './socket.js';
+import { activeSocket, closeSocket } from './socket.js';
 
 
 

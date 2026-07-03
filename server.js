@@ -16,11 +16,27 @@ export function setPort(newPort){
     PORT = newPort;
 }
 
-
+export let usersMap = new Map()
 
 const server = net.createServer((socket) => {
+    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
     createSocket(socket, 'server')
+    usersMap.set(userId, {
+        socket: socket
+    })
 });
+
+server.on('connection', (socket) => {
+    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
+    console.log(`New Client connected: ${userId}`)
+    usersMap.set(userId, {
+        socket: socket
+    })
+})
+
+
+
+
 
 export function serverBoot(arg = PORT){
    try{

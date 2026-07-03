@@ -2,15 +2,18 @@ import { handleData } from "./fileHandling.js";
 
 export let activeSocket = null;
 
+export let usersMap = new Map()
 
 export function createSocket(socket, type = null){
+    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
     if(type === 'server'){
         console.log(`Client connected ${socket.remoteAddress}`)
     }
+    
     activeSocket = socket;
     //Incoming data handling
     socket.on('data', (chunk) => {
-        handleData(chunk)
+        handleData(chunk, socket)
         });
 
     socket.on('end', () => {

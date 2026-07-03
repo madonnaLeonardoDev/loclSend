@@ -4,8 +4,8 @@ import  fs  from 'fs';
 
 let dataBuffer = '';
 
-export function handleData(chunk){
-
+export function handleData(chunk, socket){
+    const userId = `${socket.remoteAddress}:${socket.remotePort}`;
     dataBuffer += chunk.toString();
         while (dataBuffer.indexOf('\n') !== -1) {
         const newlineIndex = dataBuffer.indexOf('\n');
@@ -35,7 +35,7 @@ export function handleData(chunk){
                 return;
                 }
                 if(packet.type === 'MSG'){
-                    console.log(packet.content);
+                    console.log(`${packet.content} from ${userId}`);
                 }
             } catch (e){
                 console.log(`The following error occured: ${e.message}`)
