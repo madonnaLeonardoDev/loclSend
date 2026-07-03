@@ -5,6 +5,7 @@ import path from 'path';
 import readline from 'readline';
 import { getTargetDir } from './rlCommands.js';
 import os from 'os';
+import { createSocket } from './socket.js';
 
 function getLocalIPv4() {
     const interfaces = os.networkInterfaces();
@@ -20,78 +21,27 @@ function getLocalIPv4() {
     return '127.0.0.1';
 }
 
+const client = new net.Socket(); 
+
 export let PORT = 8000;
 const HOST = getLocalIPv4()
-
-// 1. The client IS the active socket. We export it so rlCommands can use it.
-export const client = new net.Socket();
-export let activeSocket = client; 
 
 export function setPort(newPort){
     PORT = newPort;
 }
 
-export function clientConnect(arg = PORT){
-    try{
-        if(arg === 8000){
-                console.log(`Server listening on default port ${HOST}:${arg}`);
-            } else {
-                console.log(`Server listening on ${HOST}:${arg}`);
-            }
+export function clientConnect(arg = PORT) {
+    console.log(`Attempting connection to ${HOST}:${arg}...`);
+
+    // 1. Catch all errors generically to prevent process crashes
+    client.on('error', (err) => {
+        console.error(`Socket error: ${err.message}`);
+    });
+
+    // 2. Initiate the connection
     client.connect(arg, HOST, () => {
-    console.log(`CONNECTED SUCCEFULLY TO ${arg}:${HOST}`)
-})
-    } catch(e){
-        console.log(`The following error occured ${e.message}`)
-    }
-    
+        console.log(`Connected to ${HOST}:${arg}`);
+    });
 }
 
-
-let dataBuffer = '';
-
-// 2. Flattened Listeners: These sit outside the connection logic
- client.on('data', (chunk) => {
-    dataBuffer += chunk.toString();
-    while (dataBuffer.indexOf('\n') !== -1) {
-        const newlineIndex = dataBuffer.indexOf('\n');
-        const message = dataBuffer.slice(0, newlineIndex);
-        dataBuffer = dataBuffer.slice(newlineIndex + 1);
-        
-        try {
-            const packet = JSON.parse(message);
-    
-            if(packet.type === 'FILE'){
-                console.log(`Receiving FILE ${packet.content.fileName}`);
-                const fileBuffer = Buffer.from(packet.content.file, 'base64');
-                const fileName = packet.content.fileName;
-                const targetDirectory = getTargetDir();
-                // BUG FIX: The check must happen BEFORE path.join
-                if(!targetDirectory){
-                    throw new Error('Choose a filepath first (/file --path <PATH>)');
-                }
-                
-                const savePath = path.join(process.cwd(), targetDirectory, fileName);
-                
-                fs.writeFile(savePath, fileBuffer, (err) => {
-                    if (err) console.error("Write error:", err);
-                    else console.log("File saved successfully!");
-                });
-                
-                return;
-            }
-            if(packet.type === 'MSG'){
-                console.log(packet.content);
-            }
-        } catch (e){
-            console.log(`The following error occurred: ${e.message}`);
-        }
-    }     
-});
-client.on('end', () => {
-    console.log('Disconnected from server');
-});
-
-client.on('error', (err) => {
-    console.error('Socket error:', err.message);
-});
+createSocket(client)

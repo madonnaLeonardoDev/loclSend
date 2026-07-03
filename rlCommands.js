@@ -2,28 +2,16 @@ import { time, timeStamp } from 'console';
 import  fs  from 'fs';
 import path from 'path';
 import {rl} from './main.js';
-import { activeSocket, PORT, serverReboot, setPort, serverBoot } from './server.js';
+import { PORT, serverReboot, setPort, serverBoot } from './server.js';
 import { clientConnect } from './client.js';
+import { postMessage } from './postMsg.js';
+import { closeSocket } from './socket.js';
 
 
 
 //socket writing function
 
-function postMessage(type, content){
-    if(!activeSocket){
-        console.log('No client connected to the pipe');
-        return;
-    } 
-    const packet = {
-        type: type,
-        content: content,
-        timeStamp: Date.now()
-    }
 
-    activeSocket.write(JSON.stringify(packet) + '\n')
-    console.log('SUCCESFULLY SENT the following packet')
-    console.log(packet)
-}
 
 function checkValidArguments(array, index) {
     if(!array[index]){
@@ -68,8 +56,8 @@ const rlCommands = {
                         }
                         if(argsArray[0] == '--join'){
                             if(/^\d+$/.test(portArg) && portArg.length === 4){
-                                console.log(`Connecting ro room on port ${portArg}`)
-                            clientConnect(portArg)
+                                console.log(`Connecting to room on port ${portArg}`)
+                                clientConnect(portArg)
                             return;
                             }
                             console.log('Invalid PORT')
@@ -80,18 +68,8 @@ const rlCommands = {
                         return;
                             }],
     'help': ['This is the Help message to be made still...'],
-    'exit': ['Closing...', () => {
-                                    if(activeSocket){
-                                        activeSocket.end(() => {
-                                            console.log('Closing Socket...');
-                                            rl.close()
-                                            process.exit(0)
-                                        });
-                                        
-                                    } else {
-                                        rl.close()
-                                        process.exit(0)
-                                    }
+    'exit': [, () => {  
+                                    closeSocket()
                                     
                                 }],
     'msg': [,(args) => {
