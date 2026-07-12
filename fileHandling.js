@@ -4,16 +4,14 @@ import  fs  from 'fs';
 import { usersMap } from './server.js';
 import { client } from './client.js';
 
-function broadCastPacket(packet){
-    const msgPacket = JSON.stringify({
-                type: 'MSG',
-                content: packet.content,
-                timeStamp: packet.timeStamp,
-                sender: packet.sender
-            })  + '\n';
+export function broadCastPacket(packet){
+    let msgPacket = JSON.stringify(packet) + '\n';
+    
+    if(!msgPacket){
+        console.log('Failed broadcasting packet')
+    }
 
     for(const [userId, userData] of usersMap){
-        if(userData.socket === 'server') continue;
         if(userId === packet.sender) continue
         if(userData.socket.writable){
             userData.socket.write(msgPacket)
@@ -21,19 +19,8 @@ function broadCastPacket(packet){
     }
 }
 
-let dataBuffer = '';
-
-export function handleData(chunk, socket){
-    dataBuffer += chunk.toString();
-        while (dataBuffer.indexOf('\n') !== -1) {
-        const newlineIndex = dataBuffer.indexOf('\n');
-        const message = dataBuffer.slice(0, newlineIndex);
-        dataBuffer = dataBuffer.slice(newlineIndex + 1);
-            try{
-                const packet = JSON.parse(message)
-                if(packet.type === 'FILE'){
-                    
-                    console.log(`Recieving FILE ${packet.content.fileName}`);
+function saveFiles(packet){
+    console.log(`Recieving FILE ${packet.content.fileName}`);
     
                     const fileBuffer = Buffer.from(packet.content.file, 'base64');
 
@@ -49,11 +36,23 @@ export function handleData(chunk, socket){
                         if (err) console.error("Write error:", err);
                         else console.log("File saved successfully!");
                     })
-                return;
+}
+
+let dataBuffer = '';
+
+export function handleData(chunk, socket){
+    dataBuffer += chunk.toString();
+        while (dataBuffer.indexOf('\n') !== -1) {
+        const newlineIndex = dataBuffer.indexOf('\n');
+        const message = dataBuffer.slice(0, newlineIndex);
+        dataBuffer = dataBuffer.slice(newlineIndex + 1);
+            try{
+                const packet = JSON.parse(message)
+                if(packet.type === 'FILE'){
+                    saveFiles(packet)
                 }
-                if(packet.type === 'SERVER-MSG'){
-                    console.log(`${packet.content} from ${packet.sender}`)
-                    broadCastPacket(packet)
+                if(packet.senderType === 'client'){
+                    broadCastPacket(packet);
                 }
                 if(packet.type === 'MSG'){
                     console.log(`${packet.content} from ${packet.sender}`);

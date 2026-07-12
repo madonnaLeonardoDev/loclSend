@@ -12,13 +12,12 @@ export let PORT = 8000;
 //Any host on same port
 const HOST = '0.0.0.0';
 
-export function setPort(newPort){
-    PORT = newPort;
-}
-
 export let usersMap = new Map()
 
-const server = net.createServer((socket) => {
+export function serverBoot(arg = PORT){
+    //server variable
+
+    const server = net.createServer((socket) => {
     createSocket(socket, 'server')
     console.log(`New Client connected: ${userId(socket)}`)
     //Add the connected socket to usersMap
@@ -26,17 +25,15 @@ const server = net.createServer((socket) => {
         socket: socket
     })
     //Check if the server was added to the userMap if not add
-    if(!usersMap.has(`${socket.localAddress}:${socket.localPort}`)){
-        usersMap.set(`${socket.localAddress}:${socket.localPort}`, {
-        socket: 'server'
-    })
-    }
-});
+        if(!usersMap.has(`${socket.localAddress}:${socket.localPort}`)){
+            usersMap.set(`${socket.localAddress}:${socket.localPort}`, {
+            socket: 'server'
+        })
+        }
+    });
 
+//server listen
 
-
-
-export function serverBoot(arg = PORT){
    try{
     server.listen(arg, HOST, () => {
         if(arg === 8000){

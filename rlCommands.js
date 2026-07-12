@@ -2,12 +2,12 @@ import { time, timeStamp } from 'console';
 import  fs  from 'fs';
 import path from 'path';
 import {rl} from './main.js';
-import { PORT, serverReboot, setPort, serverBoot, usersMap } from './server.js';
+import { PORT, serverReboot, serverBoot, usersMap } from './server.js';
 import { clientConnect } from './client.js';
 import { postMessage } from './postMsg.js';
-import { activeSocket, closeSocket, userId } from './socket.js';
-
-
+import { clientSocket, closeSocket, userId } from './socket.js';
+//test
+import { broadCastPacket } from './fileHandling.js';
 
 //socket writing function
 
@@ -31,9 +31,6 @@ export function getTargetDir(){
 // rlCommands list
 const rlCommands = {
     'test': [,(args, argsArray) => {
-        for(const [userId, userData] of usersMap){
-            console.log(userId)
-        }
     }],
     'room': [,(args, argsArray) =>{
                         if(!args){
@@ -77,7 +74,7 @@ const rlCommands = {
                             if(!args){
                                 console.log('You need to pass at least a value')
                             } else {
-                                postMessage('SERVER-MSG', args)
+                                postMessage('MSG', args)
                                 console.log(`>>> ${args}`)
                             }
                         }],
@@ -106,7 +103,7 @@ const rlCommands = {
                                         return;
                                     }
 
-                                postMessage('FILE', {
+                                postMessage('SERVER-FILE', {
                                     fileName: path.basename(filePath),
                                     file: data.toString('base64')
                                 })

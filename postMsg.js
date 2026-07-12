@@ -1,18 +1,34 @@
-import { activeSocket } from "./socket.js";
+import { usersMap } from "./server.js";
+import {userType} from './socket.js'
+import { broadCastPacket } from "./fileHandling.js";
+import { clientSocket } from "./socket.js";
 
 export function postMessage(type, content){
-    if(!activeSocket){
-        console.log('No client connected to the pipe');
-        return;
+    if(!usersMap.size > 0 && !clientSocket){
+        console.log('No sockets found')
+        return
     } 
+    
     const packet = {
         type: type,
         content: content,
         timeStamp: Date.now(),
-        sender: `${activeSocket.localAddress}:${activeSocket.localPort}`
+        senderType: userType,
+        sender: `${clientSocket.localAddress}:${clientSocket.localPort}`
+    };
+    try{
+        if(userType === 'server'){
+        broadCastPacket(packet)
+        }
+    if(userType === 'client'){
+        clientSocket.write(JSON.stringify(packet) + '\n')
     }
-
-    activeSocket.write(JSON.stringify(packet) + '\n')
+    }catch(e){
+        console.log(e.message)
+        return;
+    }
     console.log('SUCCESFULLY SENT the following packet')
     console.log(packet)
-}
+    }
+
+    
