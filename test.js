@@ -4,6 +4,6 @@ map.set('2', 'b')
 map.set('3', 'c')
 map.set('4', 'd')
 
-console.log(map)
+map.delete('5')
 
-console.log(map = new Map())
+console.log(map)

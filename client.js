@@ -6,6 +6,7 @@ import readline from 'readline';
 import { getTargetDir } from './rlCommands.js';
 import os from 'os';
 import { createSocket } from './socket.js';
+import { threadCpuUsage } from 'process';
 
 export const client = new net.Socket(); 
 
@@ -15,16 +16,21 @@ export function setPort(newPort){
 
 
 export function clientConnect(arg, host = null) {
-    createSocket(client);
+    return new Promise((res, rej) => {
+        createSocket(client);
     console.log(`Attempting connection to ${host}:${arg}...`);
 
-    // 1. Catch all errors generically to prevent process crashes
     client.on('error', (err) => {
         console.error(`Socket error: ${err.message}`);
+        rej(new Error(err.message))
     });
 
     // 2. Initiate the connection
     client.connect(arg, host, () => {
         console.log(`Connected to ${host}:${arg}`);
+        res()
     });
+    })
+    
+    
 }

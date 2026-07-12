@@ -9,7 +9,6 @@ import { broadCastPacket } from './fileHandling.js';
 import { postMessage } from './postMsg.js';
 
 //Any host on same port
-const HOST = '0.0.0.0';
 export let address = {
     ip: null,
     port: null
@@ -17,8 +16,9 @@ export let address = {
 
 export let usersMap = new Map()
 
-function updateServerMeta(socket) {
+function updateServerMeta(socket, roomName) {
 return {
+    roomName: roomName,
     ownerId: `${socket.localAddress}:${socket.localPort}`,
     activeUsersId: [...usersMap.keys()],
     roomPort: socket.localPort
@@ -41,7 +41,7 @@ function getLocalIPv4() {
 
 export let serverSideRoomMeta = null;
 
-export function serverBoot(arg){
+export function serverBoot(arg, roomName){
     //server variable
 
     const server = net.createServer((socket) => {
@@ -57,7 +57,7 @@ export function serverBoot(arg){
             socket: 'server'
         })
         }
-    serverSideRoomMeta = updateServerMeta(socket);
+    serverSideRoomMeta = updateServerMeta(socket, roomName);
     postMessage('serverMetaUpdate', serverSideRoomMeta);
 
     socket.on('end', () => {
@@ -69,15 +69,16 @@ export function serverBoot(arg){
 //server listen
 
    try{
-    server.listen(arg, HOST, () => {
+    server.listen(arg, '0.0.0.0', () => {
         if(arg === 8000){
-            console.log(`Server listening on default port ${HOST}:${arg}`);
+            console.log(`Server listening on default port ${'0.0.0.0'}:${arg}`);
         } else {
-            console.log(`Server listening on ${HOST}:${arg}`);
+            console.log(`Server listening on ${'0.0.0.0'}:${arg}`);
         }
         address = {
            ip: getLocalIPv4(),
-           port: arg
+           port: arg,
+           roomName: roomName
         }
     });
    } catch(e){
