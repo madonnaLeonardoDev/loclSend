@@ -2,19 +2,46 @@
 
 import { time, timeStamp } from 'console';
 import net from 'net'
+import os from 'node:os'
 import readline from 'readline';
 import { createSocket, userId } from './socket.js';
-
-
-//Default PORT
-export let PORT = 8000;
+import { broadCastPacket } from './fileHandling.js';
+import { postMessage } from './postMsg.js';
 
 //Any host on same port
 const HOST = '0.0.0.0';
+export let address = {
+    ip: null,
+    port: null
+};
 
 export let usersMap = new Map()
 
-export function serverBoot(arg = PORT){
+function updateServerMeta(socket) {
+return {
+    ownerId: `${socket.localAddress}:${socket.localPort}`,
+    activeUsersId: [...usersMap.keys()],
+    roomPort: socket.localPort
+}
+}
+
+function getLocalIPv4() {
+    const interfaces = os.networkInterfaces();
+    
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            // Skip IPv6 and internal (127.0.0.1) addresses
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1'; // Fallback
+}
+
+export let serverSideRoomMeta = null;
+
+export function serverBoot(arg){
     //server variable
 
     const server = net.createServer((socket) => {
@@ -30,6 +57,13 @@ export function serverBoot(arg = PORT){
             socket: 'server'
         })
         }
+    serverSideRoomMeta = updateServerMeta(socket);
+    postMessage('serverMetaUpdate', serverSideRoomMeta);
+
+    socket.on('end', () => {
+        serverSideRoomMeta = null
+        usersMap = new Map();
+    })
     });
 
 //server listen
@@ -41,29 +75,12 @@ export function serverBoot(arg = PORT){
         } else {
             console.log(`Server listening on ${HOST}:${arg}`);
         }
-    
+        address = {
+           ip: getLocalIPv4(),
+           port: arg
+        }
     });
    } catch(e){
     console.log(`The following error occured: ${e.message}`)
    }
-}
-
-
-
-export function serverReboot() {
-    try{
-        server.close(() => {
-        console.log('Waiting 500ms to clear port...')
-
-        setTimeout(() => {
-            server.listen(PORT, HOST, () => {
-                console.log(`Server listening on ${HOST}:${PORT}`);
-            });
-        }, 500)
-    })
-    } catch(e){
-        console.log(`Something went wrong: ${e}`)
-    }
-    
-
 }

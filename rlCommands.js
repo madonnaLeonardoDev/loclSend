@@ -1,8 +1,9 @@
+import net from 'net'
 import { time, timeStamp } from 'console';
 import  fs  from 'fs';
 import path from 'path';
 import {rl} from './main.js';
-import { PORT, serverReboot, serverBoot, usersMap } from './server.js';
+import { serverBoot, usersMap } from './server.js';
 import { clientConnect } from './client.js';
 import { postMessage } from './postMsg.js';
 import { clientSocket, closeSocket, userId } from './socket.js';
@@ -13,11 +14,17 @@ import { broadCastPacket } from './fileHandling.js';
 
 
 
-function checkValidArguments(array, index) {
-    if(!array[index]){
-        console.log('Invalid Argument')
-        return;
+function checkValidArguments(item) {
+    if(!item){
+        return false;
+    } else{
+        return true
     }
+}
+function isValidHost(host) {
+    const isIp = net.isIP(host) !== 0;
+    const isHostname = /^[a-zA-Z0-9.-]+$/.test(host);
+    return isIp || isHostname;
 }
 
 //FILE SAVING DIRECTORY
@@ -39,8 +46,11 @@ const rlCommands = {
                             }
                         
                         let portArg;
-                            checkValidArguments(argsArray, 0)
-                            checkValidArguments(argsArray, 1)
+                            if(!checkValidArguments(argsArray[0]) && !checkValidArguments(argsArray[1] && !checkValidArguments(argsArray[2]))){
+                                console.log('Invalid Argument')
+                                return
+                            }
+                            
                             portArg = argsArray[1]
                         if(argsArray[0] == 'create'){
                             if(/^\d+$/.test(portArg) && portArg.length === 4){
@@ -49,18 +59,21 @@ const rlCommands = {
                                 return;
                             }
                             console.log('Invalid PORT')
-                            serverBoot();
+                            serverBoot(8000);
                             return;
                         }
                         if(argsArray[0] == 'join'){
-                            if(/^\d+$/.test(portArg) && portArg.length === 4){
-                                console.log(`Connecting to room on port ${portArg}`)
-                                clientConnect(portArg)
+                            if(/^\d+$/.test(portArg) && portArg.length >= 1 && portArg.length <= 5){
+                                if(isValidHost(argsArray[2]) && argsArray[2]){
+                                    console.log(`Connecting to room ${argsArray[2]}:${portArg}`)
+                                    clientConnect(portArg, argsArray[2])
+                                }else{
+                                    console.log('Invalid Host')
+                                }
+                                
                             return;
                             }
                             console.log('Invalid PORT')
-                            clientConnect();
-                            return;
                         }
                         console.log('Invalid Argument')
                         return;
@@ -110,27 +123,16 @@ const rlCommands = {
 
                                 })
                         }],
-    'reboot': ['Rebooting Server...', () => serverReboot()],
-    // /port --set doesnt work yet since i need to implement reboot of the server
-    'port': [,(args, argsArray) => {
-        if(!args){
-            console.log(PORT)
+    'discover': [,async (args, argsArray) => {
+        if(argsArray[0] === 'shout'){
+            const {roomDiscoveryBc} = await import('./roomHostBroadcast.js')
+            roomDiscoveryBc()
             return;
-        };
-        if(argsArray[0] === 'set'){
-            const portArg = argsArray[1];
-
-            //THIS IF CHECKS IF ARGS IS A NUMBER OF 4 DIGITS LENGTH
-           if(/^\d+$/.test(portArg) && portArg.length === 4){
-            setPort(portArg)
-            serverReboot()
-            console.log(`PORT SUCCESFULLY SET TO: ${portArg}`)
-           } else {
-            console.log(`PORT: ${portArg} is an invalid port`)
-           }
-
-         } else {
-            console.log('Invalid arg')
+        }
+        if(argsArray[0] === 'listen'){
+            const {roomDiscoveryLs} = await import('./roomHostBroadcast.js')
+            roomDiscoveryLs()
+            return;
         }
     }]
 }

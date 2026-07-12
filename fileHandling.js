@@ -38,6 +38,9 @@ function saveFiles(packet){
                     })
 }
 
+let clientSideRoomMeta;
+
+
 let dataBuffer = '';
 
 export function handleData(chunk, socket){
@@ -48,12 +51,20 @@ export function handleData(chunk, socket){
         dataBuffer = dataBuffer.slice(newlineIndex + 1);
             try{
                 const packet = JSON.parse(message)
-                if(packet.type === 'FILE'){
-                    saveFiles(packet)
-                }
                 if(packet.senderType === 'client'){
                     broadCastPacket(packet);
                 }
+
+                if(packet.type === 'serverMetaUpdate'){
+                    clientSideRoomMeta = packet.content;
+                    console.log('updated Meta')
+                    console.log(clientSideRoomMeta)
+                }
+
+                if(packet.type === 'FILE'){
+                    saveFiles(packet)
+                }
+                
                 if(packet.type === 'MSG'){
                     console.log(`${packet.content} from ${packet.sender}`);
                 }

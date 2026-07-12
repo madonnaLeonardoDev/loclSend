@@ -8,6 +8,7 @@ export function userId(socket){
 
 export let userType;
 
+
 export function createSocket(socket, type = 'client'){    
     userType = type
 
@@ -21,6 +22,7 @@ export function createSocket(socket, type = 'client'){
     socket.on('end', () => {
         console.log('Client disconnected');
         clientSocket = null
+        userType = null
     });
 
     socket.on('error', (err) => {
