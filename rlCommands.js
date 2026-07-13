@@ -12,12 +12,18 @@ import { availableRooms, removeRoom } from './roomHostBroadcast.js';
 
 
 
-function checkValidArguments(item) {
-    if(!item){
-        return null;
-    } else{
-        return item
-    }
+function checkValidArguments(args, argsArray, range) {
+    let state;
+        if(!args){
+            return false;
+        }
+        for(let i = 0; i <= range; i++){
+                if(!argsArray[i]){
+                    return false;
+                }
+        }
+        return true;
+
 }
 function isValidHost(host) {
     const isIp = net.isIP(host) !== 0;
@@ -35,17 +41,13 @@ export function getTargetDir(){
 
 // rlCommands list
 const rlCommands = {
-    'test': [,(args, argsArray) => {
-    }],
-    'room': [, async (args, argsArray) =>{
-                        if(!args){
-                                console.log('You need to pass at least a value')
-                                return;
-                            }
-                            if(!checkValidArguments(argsArray[0]) && !checkValidArguments(argsArray[1] && !checkValidArguments(argsArray[2]))){
-                                console.log('Invalid Argument')
-                                return
-                            }
+    'test': (args, argsArray) => {
+    },
+    'room': async (args, argsArray) =>{
+                        if(!checkValidArguments(args, argsArray, 1)) {
+                            console.log('Invalid Command see /help');
+                            return;
+                        };
                         if(argsArray[0] == 'create'){
                             const {serverBoot} = await import('./server.js')
                             if(/^\d+$/.test(argsArray[1]) && argsArray[1].length >= 1 && argsArray[1].length <= 5 && argsArray[2]){
@@ -98,24 +100,24 @@ const rlCommands = {
                         }
                         console.log('Invalid Argument')
                         return;
-                            }],
-    'help': ['This is the Help message to be made still...'],
-    'exit': [, () => {  
+                    },
+    'help': () => {console.log('to be made still...')},
+    'exit': () => {  
                                     closeSocket()
                                     
-                                }],
-    'msg': [,(args) => {
-                            if(!args){
-                                console.log('You need to pass at least a value')
-                            } else {
+                                },
+    'msg': (args) => {
+                        if(!checkValidArguments(args)){
+                            console.log('Invalid Command see /help')
+                            return
+                        }
                                 postMessage('MSG', args)
                                 console.log(`>>> ${args}`)
-                            }
-                        }],
-    'file': [,(args, argsArray) => {
-                            if(!args){
-                                console.log('You need to pass at least a value')
-                                return;
+                        },
+    'file': (args, argsArray) => {
+                            if(!checkValidArguments(args, argsArray, 0)){
+                            console.log('Invalid Command see /help')
+                            return
                             }
                             if(argsArray[0] == 'path'){
                                 if(!argsArray[1]){
@@ -143,11 +145,11 @@ const rlCommands = {
                                 })
 
                                 })
-                        }],
-    'discover': [,async (args, argsArray) => {
-        if(!args){
-            console.log('You need to pass at least a value')
-           return;
+                        },
+    'discover': async (args, argsArray) => {
+        if(!checkValidArguments(args, argsArray, 0)){
+                            console.log('Invalid Command see /help')
+                            return;
         }
         if(argsArray[0] === 'shout'){
             const {roomDiscoveryBc} = await import('./roomHostBroadcast.js')
@@ -160,7 +162,27 @@ const rlCommands = {
             return;
         }
         console.log('Insert a valid argument')
-    }]
+    },
+    'role': async (args, argsArray) => {
+        if(!checkValidArguments(args, argsArray, 1)){
+                            console.log('Invalid Command see /help')
+                            return;
+        };
+        const {hasAdmin, promote, demote, getUserPermissions} = import('./permissions.js')
+        if(argsArray[0] === 'promote'){
+        promote(argsArray[1]);
+        return
+        }
+        if(argsArray[0] === 'demote'){
+            demote(argsArray[1])
+            return
+        }
+        if(argsArray[0] === 'get'){
+            getUserPermissions(argsArray[1])
+        }
+        console.log('Invalid Argument');
+    }
+    
 }
 
 export function executeCLICommands(key, args){
@@ -172,17 +194,10 @@ export function executeCLICommands(key, args){
         argsArray = null;
     }
     
-    if(!cmd){ console.log('Command not found use /help to see all the available commands');
+    if(!cmd){ 
+        console.log('Command not found use /help to see all the available commands');
         return
     } 
-
-    //Command Message
-    if(cmd[0]){
-        console.log(rlCommands[key][0])
-    }
-    //Command Execution
-    if(cmd[1]){
-        rlCommands[key][1](args, argsArray)
-    } 
+        rlCommands[key](args, argsArray)
 }
 

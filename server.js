@@ -49,7 +49,8 @@ export function serverBoot(arg, roomName){
     console.log(`New Client connected: ${userId(socket)}`)
     //Add the connected socket to usersMap
     usersMap.set(userId(socket), {
-        socket: socket
+        socket: socket,
+        admin: false
     })
     //Check if the server was added to the userMap if not add
         if(!usersMap.has(`${socket.localAddress}:${socket.localPort}`)){
