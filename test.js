@@ -1,6 +1,17 @@
-let map = new Map()
-map.set('1', {'abc': '123'})
-
-if(!map.get('2').abc){
-    console.log(false)
+/* if(argsArray[0] === 'promote'){
+        promote(argsArray[1]);
+        return
+        }
+        if(argsArray[0] === 'demote'){
+            demote(argsArray[1])
+            return
+        }
+        if(argsArray[0] === 'get'){
+            getUserPermissions(argsArray[1])
+        } */
+let a;
+function manue() {
+    a = '123'
 }
+manue('CAROTA')
+console.log(a)
